@@ -100,7 +100,7 @@ def send_otp_for_bind(chat_id, user_id, email):
             'app_id': APP_ID,
             'access_token': user_data[user_id]['token'],
             'email': email,
-            'locale': "ar_EG"
+            'locale': "vi_VN"
         }
 
         headers = COMMON_HEADERS.copy()
@@ -193,7 +193,7 @@ def send_otp_for_rebind(chat_id, user_id, email):
             'app_id': APP_ID,
             'access_token': user_data[user_id]['token'],
             'email': email,
-            'locale': "ar_EG"
+            'locale': "vi_VN"
         }
 
         headers = COMMON_HEADERS.copy()
