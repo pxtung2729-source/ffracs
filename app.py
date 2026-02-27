@@ -7,8 +7,8 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-BOT_TOKEN = ""
-ADMIN_IDS = []
+BOT_TOKEN = "7270743271:AAEwG0OegfrRUfqqvkDZYyviZz0lh9-DUVU"
+ADMIN_IDS = [5746258877]
 ALLOWED_USERS = ADMIN_IDS.copy()
 
 user_states = {}
