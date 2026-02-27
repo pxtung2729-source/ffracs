@@ -29,14 +29,14 @@ def format_time(seconds):
     seconds = seconds % 60
     time_parts = []
     if days > 0:
-        time_parts.append(f"{days} يوم")
+        time_parts.append(f"{days} ngày")
     if hours > 0:
-        time_parts.append(f"{hours} ساعة")
+        time_parts.append(f"{hours} giờ")
     if minutes > 0:
-        time_parts.append(f"{minutes} دقيقة")
+        time_parts.append(f"{minutes} phút")
     if seconds > 0 or not time_parts:
-        time_parts.append(f"{seconds} ثانية")
-    return "، ".join(time_parts)
+        time_parts.append(f"{seconds} giây")
+    return ", ".join(time_parts)
 
 def send_telegram_message(chat_id, text):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
@@ -59,7 +59,7 @@ def show_info_api(token):
 
         result = []
         if "error" in response:
-            result.append(f"❌ خطأ: {response['error']}")
+            result.append(f"❌ Lỗi: {response['error']}")
         else:
             email = response.get("email", "")
             email_to_be = response.get("email_to_be", "")
@@ -68,22 +68,22 @@ def show_info_api(token):
             request_exec_countdown = response.get("request_exec_countdown", 0)
 
             if email:
-                result.append(f"📧 الإيميل الحالي: {email}")
+                result.append(f"📧 Email hiện tại: {email}")
             if email_to_be:
-                result.append(f"🔄 الإيميل قيد الانتظار: {email_to_be}")
+                result.append(f"🔄 Email đang chờ: {email_to_be}")
             if mobile:
-                result.append(f"📱 الهاتف الحالي: {mobile}")
+                result.append(f"📱 Số điện thoại hiện tại: {mobile}")
             if mobile_to_be:
-                result.append(f"🔄 الهاتف قيد الانتظار: {mobile_to_be}")
+                result.append(f"🔄 Số điện thoại đang chờ: {mobile_to_be}")
             if request_exec_countdown > 0:
                 time_remaining = format_time(request_exec_countdown)
-                result.append(f"⏰ الوقت المتبقي: {time_remaining}")
+                result.append(f"⏰ Thời gian còn lại: {time_remaining}")
             if not result:
-                result.append("📭 لم يتم العثور على معلومات")
+                result.append("📭 Không tìm thấy thông tin")
 
         return "\n".join(result)
     except Exception as error:
-        return f"❌ خطأ: {str(error)}"
+        return f"❌ Lỗi: {str(error)}"
 
 def send_otp_for_bind(chat_id, user_id, email):
     try:
@@ -110,13 +110,13 @@ def send_otp_for_bind(chat_id, user_id, email):
 
         if response.status_code == 200:
             user_states[user_id] = 'awaiting_otp_bind'
-            send_telegram_message(chat_id, "✅ تم إرسال OTP إلى الإيميل بنجاح!\n\n🔢 الرجاء إرسال رمز OTP الذي وصلك على الإيميل:")
+            send_telegram_message(chat_id, "✅ Đã gửi OTP đến email thành công!\n\n🔢 Vui lòng gửi mã OTP mà bạn nhận được trên email:")
         else:
             user_states.pop(user_id, None)
-            send_telegram_message(chat_id, f"❌ فشل إرسال OTP: {response.text}")
+            send_telegram_message(chat_id, f"❌ Gửi OTP thất bại: {response.text}")
     except Exception as e:
         user_states.pop(user_id, None)
-        send_telegram_message(chat_id, f"❌ خطأ: {str(e)}")
+        send_telegram_message(chat_id, f"❌ Lỗi: {str(e)}")
 
 def complete_bind(chat_id, user_id, otp):
     try:
@@ -124,7 +124,7 @@ def complete_bind(chat_id, user_id, otp):
         code = user_data[user_id]['code']
         email = user_data[user_id]['email']
 
-        send_telegram_message(chat_id, "⏳ جاري ربط الإيميل...")
+        send_telegram_message(chat_id, "⏳ Đang liên kết email...")
 
         BASE_URL = "https://100067.connect.garena.com/game/account_security/bind"
         APP_ID = "100067"
@@ -134,7 +134,7 @@ def complete_bind(chat_id, user_id, otp):
             'Accept-Encoding': "gzip"
         }
 
-        # التحقق من OTP
+        # Xác minh OTP
         url = f"{BASE_URL}:verify_otp"
         payload = {
             'app_id': APP_ID,
@@ -150,7 +150,7 @@ def complete_bind(chat_id, user_id, otp):
             verifier_token = response_data.get("verifier_token")
 
             if verifier_token:
-                # إنشاء طلب الربط
+                # Tạo yêu cầu liên kết
                 url = f"{BASE_URL}:create_bind_request"
                 payload = {
                     'app_id': APP_ID,
@@ -162,19 +162,19 @@ def complete_bind(chat_id, user_id, otp):
 
                 bind_response = requests.post(url, data=payload, headers=COMMON_HEADERS)
                 if bind_response.status_code == 200:
-                    send_telegram_message(chat_id, f"✅ تم ربط الإيميل بنجاح!\n📧 الإيميل: {email}")
+                    send_telegram_message(chat_id, f"✅ Liên kết email thành công!\n📧 Email: {email}")
                 else:
-                    send_telegram_message(chat_id, f"❌ فشل الربط: {bind_response.text}")
+                    send_telegram_message(chat_id, f"❌ Liên kết thất bại: {bind_response.text}")
             else:
-                send_telegram_message(chat_id, "❌ لم يتم العثور على verifier_token")
+                send_telegram_message(chat_id, "❌ Không tìm thấy verifier_token")
         else:
-            send_telegram_message(chat_id, f"❌ فشل التحقق من OTP: {verify_response.text}")
+            send_telegram_message(chat_id, f"❌ Xác minh OTP thất bại: {verify_response.text}")
 
         user_states.pop(user_id, None)
         user_data.pop(user_id, None)
 
     except Exception as e:
-        send_telegram_message(chat_id, f"❌ خطأ: {str(e)}")
+        send_telegram_message(chat_id, f"❌ Lỗi: {str(e)}")
         user_states.pop(user_id, None)
         user_data.pop(user_id, None)
 
@@ -204,13 +204,13 @@ def send_otp_for_rebind(chat_id, user_id, email):
 
         if response.status_code == 200:
             user_states[user_id] = 'awaiting_otp_rebind'
-            send_telegram_message(chat_id, "✅ تم إرسال OTP إلى الإيميل بنجاح!\n\n🔢 الرجاء إرسال رمز OTP الذي وصلك على الإيميل:")
+            send_telegram_message(chat_id, "✅ Đã gửi OTP đến email thành công!\n\n🔢 Vui lòng gửi mã OTP mà bạn nhận được trên email:")
         else:
             user_states.pop(user_id, None)
-            send_telegram_message(chat_id, f"❌ فشل إرسال OTP: {response.text}")
+            send_telegram_message(chat_id, f"❌ Gửi OTP thất bại: {response.text}")
     except Exception as e:
         user_states.pop(user_id, None)
-        send_telegram_message(chat_id, f"❌ خطأ: {str(e)}")
+        send_telegram_message(chat_id, f"❌ Lỗi: {str(e)}")
 
 def complete_rebind(chat_id, user_id, otp):
     try:
@@ -218,7 +218,7 @@ def complete_rebind(chat_id, user_id, otp):
         code = user_data[user_id]['code']
         email = user_data[user_id]['email']
 
-        send_telegram_message(chat_id, "⏳ جاري إعادة ربط الإيميل...")
+        send_telegram_message(chat_id, "⏳ Đang liên kết lại email...")
 
         BASE_URL = "https://100067.connect.garena.com/game/account_security/bind"
         APP_ID = "100067"
@@ -228,7 +228,7 @@ def complete_rebind(chat_id, user_id, otp):
             'Accept-Encoding': "gzip"
         }
 
-        # التحقق من الهوية
+        # Xác minh danh tính
         url = f"{BASE_URL}:verify_identity"
         payload = {
             'app_id': APP_ID,
@@ -238,19 +238,19 @@ def complete_rebind(chat_id, user_id, otp):
 
         identity_response = requests.post(url, data=payload, headers=COMMON_HEADERS)
         if identity_response.status_code != 200:
-            send_telegram_message(chat_id, f"❌ فشل التحقق من الهوية: {identity_response.text}")
+            send_telegram_message(chat_id, f"❌ Xác minh danh tính thất bại: {identity_response.text}")
             user_states.pop(user_id, None)
             user_data.pop(user_id, None)
             return
 
         identity_token = identity_response.json().get("identity_token")
         if not identity_token:
-            send_telegram_message(chat_id, "❌ لم يتم العثور على identity_token")
+            send_telegram_message(chat_id, "❌ Không tìm thấy identity_token")
             user_states.pop(user_id, None)
             user_data.pop(user_id, None)
             return
 
-        # التحقق من OTP
+        # Xác minh OTP
         url = f"{BASE_URL}:verify_otp"
         payload = {
             'app_id': APP_ID,
@@ -266,7 +266,7 @@ def complete_rebind(chat_id, user_id, otp):
             verifier_token = response_data.get("verifier_token")
 
             if verifier_token:
-                # إنشاء طلب إعادة الربط
+                # Tạo yêu cầu liên kết lại
                 url = f"{BASE_URL}:create_rebind_request"
                 payload = {
                     'app_id': APP_ID,
@@ -278,19 +278,19 @@ def complete_rebind(chat_id, user_id, otp):
 
                 rebind_response = requests.post(url, data=payload, headers=COMMON_HEADERS)
                 if rebind_response.status_code == 200:
-                    send_telegram_message(chat_id, f"✅ تم إعادة ربط الإيميل بنجاح!\n📧 الإيميل: {email}")
+                    send_telegram_message(chat_id, f"✅ Liên kết lại email thành công!\n📧 Email: {email}")
                 else:
-                    send_telegram_message(chat_id, f"❌ فشل إعادة الربط: {rebind_response.text}")
+                    send_telegram_message(chat_id, f"❌ Liên kết lại thất bại: {rebind_response.text}")
             else:
-                send_telegram_message(chat_id, "❌ لم يتم العثور على verifier_token")
+                send_telegram_message(chat_id, "❌ Không tìm thấy verifier_token")
         else:
-            send_telegram_message(chat_id, f"❌ فشل التحقق من OTP: {verify_response.text}")
+            send_telegram_message(chat_id, f"❌ Xác minh OTP thất bại: {verify_response.text}")
 
         user_states.pop(user_id, None)
         user_data.pop(user_id, None)
 
     except Exception as e:
-        send_telegram_message(chat_id, f"❌ خطأ: {str(e)}")
+        send_telegram_message(chat_id, f"❌ Lỗi: {str(e)}")
         user_states.pop(user_id, None)
         user_data.pop(user_id, None)
 
@@ -307,9 +307,9 @@ def removemailbytoken(chat_id, token):
     }
     response = requests.post(url, data=payload, headers=COMMON_HEADERS).json()
     if response.get("result") == 0:
-        send_telegram_message(chat_id, "✅ تم إلغاء الاستعادة بنجاح")
+        send_telegram_message(chat_id, "✅ Đã hủy khôi phục thành công")
     else:
-        send_telegram_message(chat_id, "❌ حدث خطأ، تأكد من التوكن وأعد المحاولة")
+        send_telegram_message(chat_id, "❌ Đã xảy ra lỗi, vui lòng kiểm tra token và thử lại")
 
 def removemailbycode(chat_id, code, token):
     try:
@@ -327,30 +327,30 @@ def removemailbycode(chat_id, code, token):
         response = requests.post(url, data=payload, headers=headers).json()
 
         if "error" in response:
-            send_telegram_message(chat_id, f"❌ خطأ: {response['error']}")
+            send_telegram_message(chat_id, f"❌ Lỗi: {response['error']}")
         elif response.get("result") == 0:
-            send_telegram_message(chat_id, "✅ تم إلغاء الاستعادة بنجاح")
+            send_telegram_message(chat_id, "✅ Đã hủy khôi phục thành công")
         else:
-            send_telegram_message(chat_id, f"❌ فشل: {response}")
+            send_telegram_message(chat_id, f"❌ Thất bại: {response}")
     except Exception as e:
-        send_telegram_message(chat_id, f"❌ خطأ: {str(e)}")
+        send_telegram_message(chat_id, f"❌ Lỗi: {str(e)}")
 
 def handle_start(chat_id, user_id, first_name):
     if not is_allowed(user_id):
-        send_telegram_message(chat_id, "❌ ليس لديك صلاحية للوصول.")
+        send_telegram_message(chat_id, "❌ Bạn không có quyền truy cập.")
         return
 
-    welcome = f"""تم تطويره بواسطة محمد بوكرينة
+    welcome = f"""Được phát triển bởi Muhammad Boukriana
 
-مرحباً {first_name}!
+Xin chào {first_name}!
 
-الأوامر المتاحة:
-/info - عرض معلومات الحساب
-/bind - ربط إيميل جديد
-/rebind - إعادة ربط إيميل قديم
-/removemail - إلغاء الاستعادة (باستخدام التوكن فقط)
-/removemailbycode - إلغاء الاستعادة برمز الأمان
-/help - عرض المساعدة
+Các lệnh có sẵn:
+/info - Xem thông tin tài khoản
+/bind - Liên kết email mới
+/rebind - Liên kết lại email cũ
+/removemail - Hủy khôi phục (chỉ sử dụng token)
+/removemailbycode - Hủy khôi phục bằng mã bảo mật
+/help - Xem trợ giúp
 """
     send_telegram_message(chat_id, welcome)
 
@@ -358,19 +358,19 @@ def handle_help(chat_id, user_id):
     if not is_allowed(user_id):
         return
 
-    help_text = """🤖 المساعدة:
+    help_text = """🤖 Trợ giúp:
 
-/info - عرض معلومات الحساب
-/bind - ربط إيميل جديد
-/rebind - إعادة ربط إيميل قديم
-/removemail - إلغاء الاستعادة (باستخدام التوكن فقط)
-/removemailbycode - إلغاء الاستعادة برمز الأمان
-/start - عرض القائمة الرئيسية
+/info - Xem thông tin tài khoản
+/bind - Liên kết email mới
+/rebind - Liên kết lại email cũ
+/removemail - Hủy khôi phục (chỉ sử dụng token)
+/removemailbycode - Hủy khôi phục bằng mã bảo mật
+/start - Xem menu chính
 
-ملاحظة:
-- ربط جديد: لحساب ليس له إيميل
-- ربط قديم: لحساب له إيميل وتريد تغييره
-- بعد إرسال الإيميل، سيصلك OTP على الإيميل، قم بنسخه وإرساله للبوت
+Lưu ý:
+- Liên kết mới: Dành cho tài khoản không có email
+- Liên kết lại: Dành cho tài khoản có email và muốn thay đổi
+- Sau khi gửi email, bạn sẽ nhận được OTP trên email, hãy sao chép và gửi cho bot
 """
     send_telegram_message(chat_id, help_text)
 
@@ -379,21 +379,21 @@ def handle_info(chat_id, user_id):
         return
 
     user_states[user_id] = 'awaiting_token_info'
-    send_telegram_message(chat_id, "📝 الرجاء إرسال التوكن:")
+    send_telegram_message(chat_id, "📝 Vui lòng gửi token:")
 
 def handle_bind(chat_id, user_id):
     if not is_allowed(user_id):
         return
 
     user_states[user_id] = 'awaiting_token_bind'
-    send_telegram_message(chat_id, "📧 ربط إيميل جديد\n\nالرجاء إرسال التوكن:")
+    send_telegram_message(chat_id, "📧 Liên kết email mới\n\nVui lòng gửi token:")
 
 def handle_rebind(chat_id, user_id):
     if not is_allowed(user_id):
         return
 
     user_states[user_id] = 'awaiting_token_rebind'
-    send_telegram_message(chat_id, "🔄 إعادة ربط إيميل قديم\n\nالرجاء إرسال التوكن:")
+    send_telegram_message(chat_id, "🔄 Liên kết lại email cũ\n\nVui lòng gửi token:")
 
 def handle_message(chat_id, user_id, text):
     if not is_allowed(user_id):
@@ -404,81 +404,81 @@ def handle_message(chat_id, user_id, text):
 
     state = user_states[user_id]
 
-    # عرض معلومات الحساب
+    # Xem thông tin tài khoản
     if state == 'awaiting_token_info':
         user_data[user_id] = {'token': text}
         user_states.pop(user_id, None)
 
-        send_telegram_message(chat_id, "⏳ جاري جلب المعلومات...")
+        send_telegram_message(chat_id, "⏳ Đang lấy thông tin...")
         result = show_info_api(text)
-        send_telegram_message(chat_id, f"📊 معلومات الحساب:\n\n{result}")
+        send_telegram_message(chat_id, f"📊 Thông tin tài khoản:\n\n{result}")
 
-    # ربط جديد - خطوة 1: استلام التوكن
+    # Liên kết mới - Bước 1: Nhận token
     elif state == 'awaiting_token_bind':
         user_data[user_id] = {'token': text}
         user_states[user_id] = 'awaiting_code_bind'
-        send_telegram_message(chat_id, "🔢 الرجاء إرسال الكود الأمني (6 أرقام):")
+        send_telegram_message(chat_id, "🔢 Vui lòng gửi mã bảo mật (6 chữ số):")
 
-    # ربط جديد - خطوة 2: استلام الكود الأمني
+    # Liên kết mới - Bước 2: Nhận mã bảo mật
     elif state == 'awaiting_code_bind':
         if user_id not in user_data:
             user_data[user_id] = {}
         user_data[user_id]['code'] = text
         user_states[user_id] = 'awaiting_email_bind'
-        send_telegram_message(chat_id, "📧 الرجاء إرسال الإيميل الجديد:")
+        send_telegram_message(chat_id, "📧 Vui lòng gửi email mới:")
 
-    # ربط جديد - خطوة 3: استلام الإيميل وإرسال OTP
+    # Liên kết mới - Bước 3: Nhận email và gửi OTP
     elif state == 'awaiting_email_bind':
         if user_id not in user_data:
             user_data[user_id] = {}
         user_data[user_id]['email'] = text
-        send_telegram_message(chat_id, "🔄 جاري إرسال OTP إلى الإيميل...")
+        send_telegram_message(chat_id, "🔄 Đang gửi OTP đến email...")
         send_otp_for_bind(chat_id, user_id, text)
 
-    # ربط جديد - خطوة 4: استلام OTP وإتمام الربط
+    # Liên kết mới - Bước 4: Nhận OTP và hoàn thành liên kết
     elif state == 'awaiting_otp_bind':
         complete_bind(chat_id, user_id, text)
 
-    # إعادة ربط - خطوة 1: استلام التوكن
+    # Liên kết lại - Bước 1: Nhận token
     elif state == 'awaiting_token_rebind':
         user_data[user_id] = {'token': text}
         user_states[user_id] = 'awaiting_code_rebind'
-        send_telegram_message(chat_id, "🔢 الرجاء إرسال الكود الأمني (6 أرقام):")
+        send_telegram_message(chat_id, "🔢 Vui lòng gửi mã bảo mật (6 chữ số):")
 
-    # إعادة ربط - خطوة 2: استلام الكود الأمني
+    # Liên kết lại - Bước 2: Nhận mã bảo mật
     elif state == 'awaiting_code_rebind':
         if user_id not in user_data:
             user_data[user_id] = {}
         user_data[user_id]['code'] = text
         user_states[user_id] = 'awaiting_email_rebind'
-        send_telegram_message(chat_id, "📧 الرجاء إرسال الإيميل الجديد:")
+        send_telegram_message(chat_id, "📧 Vui lòng gửi email mới:")
 
-    # إعادة ربط - خطوة 3: استلام الإيميل وإرسال OTP
+    # Liên kết lại - Bước 3: Nhận email và gửi OTP
     elif state == 'awaiting_email_rebind':
         if user_id not in user_data:
             user_data[user_id] = {}
         user_data[user_id]['email'] = text
-        send_telegram_message(chat_id, "🔄 جاري إرسال OTP إلى الإيميل...")
+        send_telegram_message(chat_id, "🔄 Đang gửi OTP đến email...")
         send_otp_for_rebind(chat_id, user_id, text)
 
-    # إعادة ربط - خطوة 4: استلام OTP وإتمام إعادة الربط
+    # Liên kết lại - Bước 4: Nhận OTP và hoàn thành liên kết lại
     elif state == 'awaiting_otp_rebind':
         complete_rebind(chat_id, user_id, text)
 
-    # إلغاء الاستعادة بالتوكن فقط
+    # Hủy khôi phục bằng token
     elif state == 'awaiting_token_removemail':
         user_states.pop(user_id, None)
         removemailbytoken(chat_id, text)
 
-    # إلغاء الاستعادة برمز الأمان - خطوة 1: استلام التوكن
+    # Hủy khôi phục bằng mã bảo mật - Bước 1: Nhận token
     elif state == 'awaiting_token_removemailbycode':
         if user_id not in user_data:
             user_data[user_id] = {}
         user_data[user_id]['token'] = text
         user_states[user_id] = 'awaiting_code_removemailbycode'
-        send_telegram_message(chat_id, "🔢 الرجاء إرسال رمز الأمان (6 أرقام):")
+        send_telegram_message(chat_id, "🔢 Vui lòng gửi mã bảo mật (6 chữ số):")
 
-    # إلغاء الاستعادة برمز الأمان - خطوة 2: استلام الرمز وإتمام العملية
+    # Hủy khôi phục bằng mã bảo mật - Bước 2: Nhận mã và hoàn thành
     elif state == 'awaiting_code_removemailbycode':
         code = text
         token = user_data[user_id].get('token', '')
@@ -510,10 +510,10 @@ def webhook():
                 handle_rebind(chat_id, user_id)
             elif text == '/removemail':
                 user_states[user_id] = 'awaiting_token_removemail'
-                send_telegram_message(chat_id, "📝 أرسل التوكن الخاص بالحساب لإلغاء الاستعادة:")
+                send_telegram_message(chat_id, "📝 Gửi token tài khoản để hủy khôi phục:")
             elif text == '/removemailbycode':
                 user_states[user_id] = 'awaiting_token_removemailbycode'
-                send_telegram_message(chat_id, "📝 أرسل التوكن الخاص بالحساب لإلغاء الاستعادة برمز الأمان:")
+                send_telegram_message(chat_id, "📝 Gửi token tài khoản để hủy khôi phục bằng mã bảo mật:")
         else:
             handle_message(chat_id, user_id, text)
 
