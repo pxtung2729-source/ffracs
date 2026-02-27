@@ -340,7 +340,7 @@ def handle_start(chat_id, user_id, first_name):
         send_telegram_message(chat_id, "❌ Bạn không có quyền truy cập.")
         return
 
-    welcome = f"""Được phát triển bởi Muhammad Boukriana
+    welcome = f"""Được phát triển bởi QHuy
 
 Xin chào {first_name}!
 
